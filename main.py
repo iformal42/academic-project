@@ -3,6 +3,7 @@ import pygame as pg
 # initializing constants
 FPS = 60
 SKY = (135, 206, 235)
+WIDTH, HEIGHT = 1200, 1000
 
 
 def main_game():
@@ -12,7 +13,7 @@ def main_game():
     clock = pg.time.Clock()
 
     # window
-    window = pg.display.set_mode((1200, 1000))
+    window = pg.display.set_mode((WIDTH, HEIGHT))
 
     running = True
     while running:

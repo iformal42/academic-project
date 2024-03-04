@@ -5,15 +5,22 @@ from player import Player
 FPS = 60
 SKY = (135, 206, 235)
 WIDTH, HEIGHT = 1200, 1000
-VELOCITY = 5
+VELOCITY = 6
+DEFAULT_STATE = "idle"
 
 
 def action_handler(p):
-        keys = pg.key.get_pressed()
-        if keys[pg.K_d]:
-            p.move(VELOCITY)
-        if keys[pg.K_a]:
-            p.move(-VELOCITY)
+    """keys event handler"""
+    keys = pg.key.get_pressed()
+    if keys[pg.K_d]:
+        p.direction = "right"
+        p.move(VELOCITY)
+    if keys[pg.K_a]:
+        p.direction = "left"
+        p.move(-VELOCITY)
+
+    if all(key == 0 for key in keys):
+        p.current_state = DEFAULT_STATE
 
 
 def main_game():
@@ -30,18 +37,20 @@ def main_game():
     running = True
     while running:
         # 60 FPS
-        clock.tick(60)
+        clock.tick(FPS)
         window.fill(SKY)
-        # window.blit(player.stand(3, 2), (50, 500))
-        player.animation_idle(9)
+
         for event in pg.event.get():
             # stop condition
             if event.type is pg.QUIT:
                 running = False
-
+            # detects key pressed
             action_handler(p=player)
 
+        # animate the player
+        player.animate_player()
 
+        # update the screens
         pg.display.update()
 
 

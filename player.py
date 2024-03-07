@@ -1,6 +1,6 @@
 import pygame as pg
 
-PATH = "gameasset/Main Characters/Mask Dude/"
+PATH = "gameasset/Main Characters/Pink Man/"
 
 ALL_SPRITE = {"idle": ["Idle (32x32).png", 11],
               "run": ["Run (32x32).png", 12],
@@ -20,8 +20,6 @@ class Player(pg.sprite.Sprite):
         self.window = screen
         self.direction = "right"
         self.rect = pg.Rect(0, 0, self.width, self.height)
-        # self.rect.x, self.rect.y = 100, 500
-        # print(self.rect.center)
         self.sprites_states = {}
 
         # storing all sprite into dictionary to respective keys
@@ -33,13 +31,14 @@ class Player(pg.sprite.Sprite):
                 player_list.append(self.stand(frame, character_img))
             self.sprites_states[sprite_sheet] = player_list
 
+        self.rect.center =(50,900-128)
         self.current_state = "idle"
         self.animation_rate = 0
 
     def stand(self, frame, img):
         """make working sprite sheet """
         image = pg.Surface((self.width, self.height), pg.SRCALPHA).convert_alpha()
-        self.rect = pg.Rect(frame * self.width, 0, self.width, self.height)
+        self.rect = pg.Rect(frame * self.width, 0, 2 * self.width, 2 * self.height)
         image.blit(img, (0, 0), self.rect)
         return pg.transform.scale2x(image)
 
@@ -60,13 +59,20 @@ class Player(pg.sprite.Sprite):
         else:
             # for direction right
             img = character_state[int(self.animation_rate)]
+        # pg.draw.rect(self.window, (255, 0, 0), self.rect)
+        self.window.blit(img, self.rect)
 
-        self.window.blit(img, (self.rect.x, self.rect.y))
-
-    def move(self, horizontal_vel, vertical_vel=0):
-        # move the player on screen
+    def run(self, horizontal_vel, vertical_vel=0):
+        # run the player on screen
         self.current_state = "run"
-        print(self.rect.x, self.rect.y)
+        # print(self.rect.x, self.rect.y)
+        self.rect.move_ip(horizontal_vel, 0)
+
+    def jump(self, horizontal_vel, vertical_vel=0):
+        # jump the player on screen
+        self.current_state = "jump"
+        if self.direction == "left":
+            horizontal_vel *= -1
         self.rect.move_ip(horizontal_vel, vertical_vel)
 
 
@@ -101,6 +107,6 @@ if __name__ == "__main__":
             keys = pg.key.get_pressed()
             if keys[pg.K_RIGHT]:
                 print("yes")
-                player.move(5)
+                player.run(5)
 
         pg.display.update()

@@ -1,7 +1,7 @@
 import pygame as pg
 
 PATH = "gameasset/Main Characters/Pink Man/"
-
+GRAVITY = 9.8
 ALL_SPRITE = {"idle": ["Idle (32x32).png", 11],
               "run": ["Run (32x32).png", 12],
               "jump": ["Jump (32x32).png", 1],
@@ -13,13 +13,14 @@ ALL_SPRITE = {"idle": ["Idle (32x32).png", 11],
 
 
 class Player(pg.sprite.Sprite):
-    def __init__(self, width, height, screen):
+    def __init__(self, width: int, height: int, screen):
         super().__init__()
 
         self.width, self.height = width, height
         self.window = screen
         self.direction = "right"
         self.rect = pg.Rect(0, 0, self.width, self.height)
+        self.mask = None
         self.sprites_states = {}
 
         # storing all sprite into dictionary to respective keys
@@ -31,16 +32,23 @@ class Player(pg.sprite.Sprite):
                 player_list.append(self.stand(frame, character_img))
             self.sprites_states[sprite_sheet] = player_list
 
-        self.rect.center =(50,900-128)
+        # self.rect.center = (50, 900 - 96)
         self.current_state = "idle"
         self.animation_rate = 0
+        self.fall_count = 0
 
-    def stand(self, frame, img):
+    def stand(self, frame: int, img):
         """make working sprite sheet """
         image = pg.Surface((self.width, self.height), pg.SRCALPHA).convert_alpha()
         self.rect = pg.Rect(frame * self.width, 0, 2 * self.width, 2 * self.height)
         image.blit(img, (0, 0), self.rect)
         return pg.transform.scale2x(image)
+
+    def fall(self):
+        self.fall_count += GRAVITY / 60
+        y = min(1, self.fall_count)
+        # self.current_state = "fall"
+        self.rect.move_ip(0, self.fall_count)
 
     def animate_player(self):
         """animate the player"""
@@ -59,21 +67,29 @@ class Player(pg.sprite.Sprite):
         else:
             # for direction right
             img = character_state[int(self.animation_rate)]
-        # pg.draw.rect(self.window, (255, 0, 0), self.rect)
+
         self.window.blit(img, self.rect)
 
-    def run(self, horizontal_vel, vertical_vel=0):
-        # run the player on screen
-        self.current_state = "run"
-        # print(self.rect.x, self.rect.y)
-        self.rect.move_ip(horizontal_vel, 0)
+        return img
 
-    def jump(self, horizontal_vel, vertical_vel=0):
+    def run(self, horizontal_vel: int, vertical_vel: int = 0):
+        # print(self.rect.x, self.rect.y)
+        self.rect.move_ip(horizontal_vel, vertical_vel)
+
+        # run the player on screen
+        # self.current_state = "run"
+
+    def jump(self, horizontal_vel: int, vertical_vel: int = 0):
         # jump the player on screen
         self.current_state = "jump"
         if self.direction == "left":
             horizontal_vel *= -1
         self.rect.move_ip(horizontal_vel, vertical_vel)
+
+    def updated(self, sprites):
+        self.rect = sprites.get_rect(topleft=(self.rect.x, self.rect.y))
+        self.mask = pg.mask.from_surface(sprites)
+        return self.mask
 
 
 if __name__ == "__main__":

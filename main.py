@@ -1,6 +1,6 @@
 import pygame as pg
 from player import Player
-from ground import Platform
+from object import Platform, Object
 import math as m
 
 # initializing constants
@@ -25,7 +25,7 @@ def action_handler(p):
     global default_state
 
     not_falling = True
-    if p.rect.y < 765:
+    if p.rect.y < 850:
         not_falling = False
         default_state = "fall"
         p.fall()
@@ -49,20 +49,21 @@ def action_handler(p):
             default_state = "idle"
 
 
-def draw_ground(screen, b):
+def blocks(width, height):
     """make block ground"""
-    tempt = []
-    block = b.build(begin_x=96, begin_y=0)
+    obj = Object(width, height)
+    w, h = obj.block_w, obj.block_h
 
-    width, height = b.block_w, b.block_h
-    length = m.ceil(WIDTH / int(width))
+    count_tiles = m.ceil(WIDTH / w)
 
-    for i in range(length):
-        b.rect.topleft = (i * width, HEIGHT - height)
-        pg.draw.rect(screen, col, b.rect)
-        screen.blit(block, b.rect)
-        tempt.append(b.rect)
-    return tempt
+    return [Platform(tile * w, HEIGHT - h, width, height)
+            for tile in range(count_tiles)]
+
+
+def draw_ground(window, items):
+    for tile in items:
+        tile.draw(window)
+
 
 
 def main_game():
@@ -76,7 +77,8 @@ def main_game():
 
     # adding player object
     player = Player(32, 32, window)
-    block = Platform(16, 16, window)
+
+    floor = blocks(16, 16)
 
     running = True
     while running:
@@ -91,9 +93,12 @@ def main_game():
             # detects key pressed
         action_handler(p=player)
 
-        t = draw_ground(window, block)
+        draw_ground(window, floor)
         # animate the player
         sprite = player.animate_player()
+        for i in floor:
+            if pg.sprite.collide_mask(sprite,i):
+                print("yes")
 
         # check_collision(player)
         player.current_state = default_state

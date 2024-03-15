@@ -1,6 +1,6 @@
 import pygame as pg
 
-PATH = "gameasset/Main Characters/Pink Man/"
+PATH = "gameasset/Main Characters/Mask Dude/"
 GRAVITY = 9.8
 ALL_SPRITE = {"idle": ["Idle (32x32).png", 11],
               "run": ["Run (32x32).png", 12],
@@ -12,18 +12,12 @@ ALL_SPRITE = {"idle": ["Idle (32x32).png", 11],
               }
 
 
-class Player(pg.sprite.Sprite):
-    def __init__(self, width: int, height: int, screen):
+class Sprite(pg.sprite.Sprite):
+    def __init__(self, width, height):
         super().__init__()
-
         self.width, self.height = width, height
-        self.window = screen
-        self.direction = "right"
         self.rect = pg.Rect(0, 0, self.width, self.height)
-        self.mask = None
         self.sprites_states = {}
-
-        # storing all sprite into dictionary to respective keys
         for sprite_sheet in ALL_SPRITE:
             character_img = pg.image.load(f"{PATH}{ALL_SPRITE[sprite_sheet][0]}")
             frames = ALL_SPRITE[sprite_sheet][1]
@@ -32,11 +26,6 @@ class Player(pg.sprite.Sprite):
                 player_list.append(self.stand(frame, character_img))
             self.sprites_states[sprite_sheet] = player_list
 
-        # self.rect.center = (50, 900 - 96)
-        self.current_state = "idle"
-        self.animation_rate = 0
-        self.fall_count = 0
-
     def stand(self, frame: int, img):
         """make working sprite sheet """
         image = pg.Surface((self.width, self.height), pg.SRCALPHA).convert_alpha()
@@ -44,13 +33,42 @@ class Player(pg.sprite.Sprite):
         image.blit(img, (0, 0), self.rect)
         return pg.transform.scale2x(image)
 
-    def fall(self):
-        self.fall_count += GRAVITY / 60
-        y = min(1, self.fall_count)
-        # self.current_state = "fall"
-        self.rect.move_ip(0, self.fall_count)
 
-    def animate_player(self):
+class Player(Sprite):
+    def __init__(self, width: int, height: int):
+        super().__init__(width, height)
+
+        self.air_count, self.air_timer = 0, 30
+        self.width, self.height = width, height
+        self.direction = "right"
+        self.surface = pg.Surface((2 * self.width, 2 * self.height), pg.SRCALPHA).convert_alpha()
+        self.mask = pg.mask.from_surface(self.surface)
+        self.character_states = self.sprites_states
+        self.y_vel = 5
+        self.current_state = "idle"
+        self.animation_rate = 0
+        self.fall_count, self.in_air = 0, True
+        self.jump_count = 0
+        self.rect.x = 500
+
+    def fall(self, should_fall: bool, horizontal_vel):
+        """gravity"""
+        if self.direction == "left":
+            horizontal_vel *= -1
+
+        if should_fall:
+            self.in_air = True
+            self.current_state = "fall"
+            self.fall_count += GRAVITY / 60
+            self.rect.move_ip(horizontal_vel, self.fall_count)
+
+    def update(self, img):
+        """made mask for collision"""
+        self.surface = pg.Surface((2 * self.width, 2 * self.height), pg.SRCALPHA).convert_alpha()
+        self.surface.blit(img, (0, 0))
+        self.mask = pg.mask.from_surface(self.surface)
+
+    def animate_player(self, screen):
         """animate the player"""
         self.animation_rate += 0.20
 
@@ -67,29 +85,48 @@ class Player(pg.sprite.Sprite):
         else:
             # for direction right
             img = character_state[int(self.animation_rate)]
-
-        self.window.blit(img, self.rect)
-
-        return img
+        self.update(img)
+        # pg.draw.rect(screen,(255,0,0),self.rect)
+        screen.blit(self.surface, self.rect)
 
     def run(self, horizontal_vel: int, vertical_vel: int = 0):
-        # print(self.rect.x, self.rect.y)
+        """move the sprite"""
+        self.current_state = "run"
         self.rect.move_ip(horizontal_vel, vertical_vel)
-
-        # run the player on screen
-        # self.current_state = "run"
 
     def jump(self, horizontal_vel: int, vertical_vel: int = 0):
-        # jump the player on screen
-        self.current_state = "jump"
+        """ jump the player on screen"""
         if self.direction == "left":
             horizontal_vel *= -1
+
+        if self.jump_count == 2:
+            state = "double_jump"
+
+        else:
+            state = "jump"
+
+        self.current_state = state
+        self.in_air = True
         self.rect.move_ip(horizontal_vel, vertical_vel)
 
-    def updated(self, sprites):
-        self.rect = sprites.get_rect(topleft=(self.rect.x, self.rect.y))
-        self.mask = pg.mask.from_surface(sprites)
-        return self.mask
+    def landed(self):
+        self.fall_count = 0
+        self.air_count = 0
+        self.jump_count = 0
+        self.current_state = "idle"
+        self.in_air, self.air_timer = False, 30
+
+    def loop(self):
+        if self.air_count <= self.air_timer and self.jump_count == 2:
+            self.jump(3, -5)
+            self.air_count += 1
+
+        elif self.air_count <= self.air_timer and self.jump_count > 0:
+            self.jump(4, -5)
+            self.air_count += 1
+
+        if self.air_count > self.air_timer:
+            self.fall(True, 3)
 
 
 if __name__ == "__main__":
@@ -101,7 +138,7 @@ if __name__ == "__main__":
     # window
     window = pg.display.set_mode((1200, 1000))
 
-    player = Player(32, 32, window)
+    player = Player(32, 32)
     sprite = pg.sprite.Group()
     # print(player)
     # print(sprite)
@@ -113,7 +150,7 @@ if __name__ == "__main__":
 
         window.fill((135, 206, 235))
 
-        player.animate_player()
+        player.animate_player(window)
         # sprite.draw(window)
         for event in pg.event.get():
             # stop condition

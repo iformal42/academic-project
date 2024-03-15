@@ -20,7 +20,6 @@ class Object(pg.sprite.Sprite):
         self.rect = pg.Rect(begin_x, begin_y, self.block_w, self.block_h)
         image.blit(self.image, (0, 0), self.rect)
         block = pg.transform.scale(image, (self.block_w, self.block_h))
-        self.rect = block.get_rect()
         return block
 
 
@@ -30,7 +29,9 @@ class Platform(Object):
         self.image = self.build(96, 0)
         self.rect.topleft = (x, y)
         self.surface = pg.Surface((self.block_w, self.block_h), pg.SRCALPHA).convert_alpha()
-        self.surface.blit(self.image,(0,0))
+        self.surface.blit(self.image, (0, 0))
         self.mask = pg.mask.from_surface(self.surface)
+
     def draw(self, win):
+        """draw the blocks on the screen"""
         win.blit(self.surface, self.rect.topleft)

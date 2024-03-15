@@ -8,45 +8,31 @@ FPS = 60
 SKY = (135, 206, 235)
 WIDTH, HEIGHT = 1500, 900
 VELOCITY = 6
-default_state = "idle"
+falling = True
 """actions of player are :- idle,run,jump,double_jump,hit,fall,wall_jump"""
 col = (0, 225, 0)
 
 
-# def check_collision(player):
-#     global default_state
-#
-#     else:
-#         default_state = "idle"
+def check_collision(player, items):
+    global falling
+    for i in items:
+        if pg.sprite.collide_mask(player, i):
+            falling = False
+            player.landed()
+            player.rect.bottom = i.rect.top
 
 
 def action_handler(p):
     """keys event handler"""
-    global default_state
-
-    not_falling = True
-    if p.rect.y < 850:
-        not_falling = False
-        default_state = "fall"
-        p.fall()
-
-    if not_falling:
-        p.rect.y = 769
+    p.fall(falling, 0)
+    if not falling and not p.in_air:
         keys = pg.key.get_pressed()
         if keys[pg.K_d]:
             p.direction = "right"
-            default_state = "run"
             p.run(VELOCITY)
         elif keys[pg.K_a]:
             p.direction = "left"
-            default_state = "run"
             p.run(-VELOCITY)
-        elif keys[pg.K_w]:
-            p.jump(VELOCITY, -2)
-        # elif keys[pg.K_x]:
-        #     p.jump(VELOCITY, 2)
-        else:
-            default_state = "idle"
 
 
 def blocks(width, height):
@@ -61,9 +47,9 @@ def blocks(width, height):
 
 
 def draw_ground(window, items):
+    """draw the floor of the game"""
     for tile in items:
         tile.draw(window)
-
 
 
 def main_game():
@@ -76,8 +62,9 @@ def main_game():
     window = pg.display.set_mode((WIDTH, HEIGHT))
 
     # adding player object
-    player = Player(32, 32, window)
+    player = Player(32, 32)
 
+    # storing blocks for floor
     floor = blocks(16, 16)
 
     running = True
@@ -90,18 +77,28 @@ def main_game():
             # stop condition
             if event.type is pg.QUIT:
                 running = False
-            # detects key pressed
+
+            if event.type == pg.KEYUP:
+                player.current_state = "idle"
+            if event.type == pg.KEYDOWN:
+                if event.key == pg.K_SPACE and player.jump_count < 2 and not falling:
+                    player.jump_count += 1
+                    if player.jump_count == 2:
+                        player.air_timer += 25
+
+        # making a floor
+        draw_ground(window, floor)
+
+        # animate the player
+
+        player.animate_player(window)
+
+        player.loop()
+
+        check_collision(player=player, items=floor)
+
         action_handler(p=player)
 
-        draw_ground(window, floor)
-        # animate the player
-        sprite = player.animate_player()
-        for i in floor:
-            if pg.sprite.collide_mask(sprite,i):
-                print("yes")
-
-        # check_collision(player)
-        player.current_state = default_state
         pg.display.update()
 
 

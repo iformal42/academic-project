@@ -52,15 +52,6 @@ class Player(Sprite):
         self.rect.x = 500
         # self.img = self.sprites_states[self.current_state]
 
-
-    def fall(self, should_fall: bool, x_vel):
-        """gravity"""
-        if should_fall:
-            self.in_air = True
-            self.current_state = "fall"
-            self.fall_count += GRAVITY / 60
-            self.rect.move_ip(x_vel, self.fall_count)
-
     def update(self):
         """made mask for collision"""
         self.surface = pg.Surface((2 * self.width, 2 * self.height), pg.SRCALPHA).convert_alpha()
@@ -99,6 +90,14 @@ class Player(Sprite):
             self.x_vel = 6
         self.current_state = "run"
         self.rect.move_ip(self.x_vel, vertical_vel)
+
+    def fall(self, should_fall: bool, x_vel):
+        """gravity"""
+        if should_fall:
+            self.in_air = True
+            self.current_state = "fall"
+            self.fall_count += GRAVITY / 60
+            self.rect.move_ip(x_vel, self.fall_count)
 
     def jump(self, vertical_vel: int = 0):
         """ jump the player on screen"""

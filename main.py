@@ -25,7 +25,6 @@ def check_up_down_collision(player, items):
                 falling = False
                 player.rect.bottom = i.rect.top
                 player.landed()
-                print("shoul")
             if player.y_vel < 0:
                 player.rect.top = i.rect.bottom
                 player.air_count = player.air_timer + 1
@@ -38,19 +37,24 @@ def check_up_down_collision(player, items):
         player.air_count = player.air_timer + 1
 
 
-def should_fall(c, player):
-    if c == "not collided" and not player.in_air:
-        pass
+# def should_fall(c, player):
+#     if c == "not collided" and not player.in_air:
+#         pass
 
 
 def collide(player, items, dx):
+    global falling
     player.rect.move_ip(dx, 0)
     player.update()
     collided = None
     for ob in items:
         if pg.sprite.collide_mask(player, ob):
             collided = ob
-
+            print("work")
+            if player.in_air:
+                player.x_vel *= -2/VELOCITY
+                # player.rect.move_ip(-dx,0)
+            # player.air_count = 1+player.air_timer
             break
     player.rect.move_ip(-dx, 0)
     player.update()
@@ -59,8 +63,8 @@ def collide(player, items, dx):
 
 def action_handler(p, floor):
     """keys event handler"""
-    cr = collide(p, floor, VELOCITY * 2)
-    cl = collide(p, floor, -VELOCITY * 2)
+    cr = collide(p, floor, VELOCITY * 1.5)
+    cl = collide(p, floor, -VELOCITY * 1.5)
     p.fall(falling, 0)
     if not falling and not p.in_air:
         keys = pg.key.get_pressed()
@@ -145,7 +149,7 @@ def main_game():
 
         player.loop()
         is_collided = check_up_down_collision(player=player, items=floor)
-        should_fall(is_collided, player)
+
         action_handler(p=player, floor=floor)
         if ((player.rect.right - offset_x >= WIDTH - scroll_boundary) and player.x_vel > 0) or (
                 (player.rect.left - offset_x <= scroll_boundary) and player.x_vel < 0):

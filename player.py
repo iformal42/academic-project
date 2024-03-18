@@ -37,40 +37,39 @@ class Sprite(pg.sprite.Sprite):
 class Player(Sprite):
     def __init__(self, width: int, height: int):
         super().__init__(width, height)
-
+        self.img = None
         self.air_count, self.air_timer = 0, 30
         self.width, self.height = width, height
         self.direction = "right"
         self.surface = pg.Surface((2 * self.width, 2 * self.height), pg.SRCALPHA).convert_alpha()
         self.mask = pg.mask.from_surface(self.surface)
         self.character_states = self.sprites_states
-        self.y_vel = 5
+        self.x_vel, self.y_vel = 0, 0
         self.current_state = "idle"
         self.animation_rate = 0
         self.fall_count, self.in_air = 0, True
         self.jump_count = 0
         self.rect.x = 500
+        # self.img = self.sprites_states[self.current_state]
 
-    def fall(self, should_fall: bool, horizontal_vel):
+
+    def fall(self, should_fall: bool, x_vel):
         """gravity"""
-        if self.direction == "left":
-            horizontal_vel *= -1
-
         if should_fall:
             self.in_air = True
             self.current_state = "fall"
             self.fall_count += GRAVITY / 60
-            self.rect.move_ip(horizontal_vel, self.fall_count)
+            self.rect.move_ip(x_vel, self.fall_count)
 
-    def update(self, img):
+    def update(self):
         """made mask for collision"""
         self.surface = pg.Surface((2 * self.width, 2 * self.height), pg.SRCALPHA).convert_alpha()
-        self.surface.blit(img, (0, 0))
+        self.surface.blit(self.img, (0, 0))
         self.mask = pg.mask.from_surface(self.surface)
 
-    def animate_player(self, screen):
+    def animate_player(self):
         """animate the player"""
-        self.animation_rate += 0.20
+        self.animation_rate += 0.2
 
         # player's state
         character_state = self.sprites_states[self.current_state]
@@ -81,35 +80,39 @@ class Player(Sprite):
 
         if self.direction == "left":
             # for direction left
-            img = pg.transform.flip(character_state[int(self.animation_rate)], True, False)
+            self.img = pg.transform.flip(character_state[int(self.animation_rate)], True, False)
         else:
             # for direction right
-            img = character_state[int(self.animation_rate)]
-        self.update(img)
+            self.img = character_state[int(self.animation_rate)]
+        self.update()
+
+    def draw(self, screen, offset_x):
+        self.animate_player()
         # pg.draw.rect(screen,(255,0,0),self.rect)
-        screen.blit(self.surface, self.rect)
+        screen.blit(self.surface, (self.rect.x - offset_x, self.rect.y))
 
     def run(self, horizontal_vel: int, vertical_vel: int = 0):
         """move the sprite"""
-        self.current_state = "run"
-        self.rect.move_ip(horizontal_vel, vertical_vel)
-
-    def jump(self, horizontal_vel: int, vertical_vel: int = 0):
-        """ jump the player on screen"""
         if self.direction == "left":
-            horizontal_vel *= -1
+            self.x_vel = -6
+        else:
+            self.x_vel = 6
+        self.current_state = "run"
+        self.rect.move_ip(self.x_vel, vertical_vel)
 
+    def jump(self, vertical_vel: int = 0):
+        """ jump the player on screen"""
         if self.jump_count == 2:
             state = "double_jump"
-
         else:
             state = "jump"
 
         self.current_state = state
         self.in_air = True
-        self.rect.move_ip(horizontal_vel, vertical_vel)
+        self.rect.move_ip(self.x_vel * 0.5, vertical_vel)
 
     def landed(self):
+        self.y_vel = 0
         self.fall_count = 0
         self.air_count = 0
         self.jump_count = 0
@@ -118,15 +121,16 @@ class Player(Sprite):
 
     def loop(self):
         if self.air_count <= self.air_timer and self.jump_count == 2:
-            self.jump(3, -5)
+            self.jump(self.y_vel)
             self.air_count += 1
 
         elif self.air_count <= self.air_timer and self.jump_count > 0:
-            self.jump(4, -5)
+            self.jump(self.y_vel)
             self.air_count += 1
 
         if self.air_count > self.air_timer:
-            self.fall(True, 3)
+            self.y_vel = 0
+            self.fall(True, x_vel=self.x_vel * 0.5)
 
 
 if __name__ == "__main__":

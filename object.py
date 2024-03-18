@@ -8,7 +8,7 @@ class Object(pg.sprite.Sprite):
     def __init__(self, width: int, height: int):
         super().__init__()
 
-        self.width, self.height = 3 * width, 3 * height
+        self.width, self.height = width, height
         self.rect = pg.Rect(0, 0, self.width, self.height)
         # self.mask = pg.mask.from_surface(self.image)
         self.block_w, self.block_h = self.width + SCALE_X, self.height + SCALE_Y
@@ -24,14 +24,15 @@ class Object(pg.sprite.Sprite):
 
 
 class Platform(Object):
-    def __init__(self, x, y, width, height):
+    def __init__(self, x, y, width, height, begin_x, begin_y):
         super().__init__(width, height)
-        self.image = self.build(96, 0)
+        self.image = self.build(begin_x, begin_y)
         self.rect.topleft = (x, y)
         self.surface = pg.Surface((self.block_w, self.block_h), pg.SRCALPHA).convert_alpha()
         self.surface.blit(self.image, (0, 0))
         self.mask = pg.mask.from_surface(self.surface)
 
-    def draw(self, win):
+    def draw(self, win, offset_x):
         """draw the blocks on the screen"""
-        win.blit(self.surface, self.rect.topleft)
+        # pg.draw.rect(win, (255, 0, 0), self.rect)
+        win.blit(self.surface, (self.rect.x - offset_x, self.rect.y))

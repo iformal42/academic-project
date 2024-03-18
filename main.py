@@ -13,43 +13,89 @@ falling = True
 col = (0, 225, 0)
 
 
-def check_collision(player, items):
+def check_up_down_collision(player, items):
     global falling
+    add = 1
+    if player.current_state == "run":
+        add = 10
+    player.rect.bottom += add
     for i in items:
         if pg.sprite.collide_mask(player, i):
-            falling = False
-            player.landed()
-            player.rect.bottom = i.rect.top
+            if player.y_vel == 0:
+                falling = False
+                player.rect.bottom = i.rect.top
+                player.landed()
+                print("shoul")
+            if player.y_vel < 0:
+                player.rect.top = i.rect.bottom
+                player.air_count = player.air_timer + 1
+
+            return "collided"
+
+    player.rect.bottom -= add
+    if not player.in_air:
+        # print("fall")
+        player.air_count = player.air_timer + 1
 
 
-def action_handler(p):
+def should_fall(c, player):
+    if c == "not collided" and not player.in_air:
+        pass
+
+
+def collide(player, items, dx):
+    player.rect.move_ip(dx, 0)
+    player.update()
+    collided = None
+    for ob in items:
+        if pg.sprite.collide_mask(player, ob):
+            collided = ob
+
+            break
+    player.rect.move_ip(-dx, 0)
+    player.update()
+    return collided
+
+
+def action_handler(p, floor):
     """keys event handler"""
+    cr = collide(p, floor, VELOCITY * 2)
+    cl = collide(p, floor, -VELOCITY * 2)
     p.fall(falling, 0)
     if not falling and not p.in_air:
         keys = pg.key.get_pressed()
-        if keys[pg.K_d]:
+        if keys[pg.K_d] and not cr:
             p.direction = "right"
             p.run(VELOCITY)
-        elif keys[pg.K_a]:
+        elif keys[pg.K_a] and not cl:
             p.direction = "left"
-            p.run(-VELOCITY)
+            p.run(VELOCITY)
+        else:
+            p.x_vel = 0
 
 
-def blocks(width, height):
+def blocks(width, height, pos_x, pos_y):
     """make block ground"""
     obj = Object(width, height)
-    w, h = obj.block_w, obj.block_h
+    w, h = obj.block_w - pos_x, obj.block_h - pos_y
 
-    count_tiles = m.ceil(WIDTH / w)
+    count_tiles = m.ceil(WIDTH / w) + 10
+    platform = []
+    for tile in range(-2, count_tiles):
+        if tile in (8, 9, 15,16):
+            continue
+        platform.append(Platform(tile * w, HEIGHT - h, width, height, 96, 0))
 
-    return [Platform(tile * w, HEIGHT - h, width, height)
-            for tile in range(count_tiles)]
+    return platform
 
 
-def draw_ground(window, items):
-    """draw the floor of the game"""
+def draw_items(window, items, offset_x, player):
+    """drawing the items of the game"""
+    # making a floor
     for tile in items:
-        tile.draw(window)
+        tile.draw(window, offset_x)
+    # animate the player
+    player.draw(window, offset_x)
 
 
 def main_game():
@@ -57,7 +103,8 @@ def main_game():
     pg.init()
 
     clock = pg.time.Clock()
-
+    offset_x = 0
+    scroll_boundary = WIDTH * 0.2
     # window
     window = pg.display.set_mode((WIDTH, HEIGHT))
 
@@ -65,7 +112,12 @@ def main_game():
     player = Player(32, 32)
 
     # storing blocks for floor
-    floor = blocks(16, 16)
+    floor = [*blocks(48, 48, 0, 0),
+             Platform(50, HEIGHT - 2 * (48 + 16), 48, 48, 352 - 80, 64),
+             Platform(50, HEIGHT - 6 * 48, 48, 16, 192, 0),
+             Platform(98 + 42, HEIGHT - 6 * 48, 48, 16, 192, 0),
+             Platform(98 + 48 + 42 + 42, HEIGHT - 6 * 48, 48, 16, 192, 0)]
+    # objects = [Platform(50, HEIGHT - 3 * 48, 16, 16)]
 
     running = True
     while running:
@@ -80,24 +132,24 @@ def main_game():
 
             if event.type == pg.KEYUP:
                 player.current_state = "idle"
+
             if event.type == pg.KEYDOWN:
                 if event.key == pg.K_SPACE and player.jump_count < 2 and not falling:
+                    player.y_vel = -5
                     player.jump_count += 1
                     if player.jump_count == 2:
                         player.air_timer += 25
 
         # making a floor
-        draw_ground(window, floor)
-
-        # animate the player
-
-        player.animate_player(window)
+        draw_items(window, floor, offset_x, player)
 
         player.loop()
-
-        check_collision(player=player, items=floor)
-
-        action_handler(p=player)
+        is_collided = check_up_down_collision(player=player, items=floor)
+        should_fall(is_collided, player)
+        action_handler(p=player, floor=floor)
+        if ((player.rect.right - offset_x >= WIDTH - scroll_boundary) and player.x_vel > 0) or (
+                (player.rect.left - offset_x <= scroll_boundary) and player.x_vel < 0):
+            offset_x += player.x_vel
 
         pg.display.update()
 

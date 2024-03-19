@@ -49,8 +49,8 @@ class Player(Sprite):
         self.animation_rate = 0
         self.fall_count, self.in_air = 0, True
         self.jump_count = 0
-        self.rect.x = 500
-        # self.img = self.sprites_states[self.current_state]
+        self.rect.x,self.rect.y = 400,810
+
 
     def update(self):
         """made mask for collision"""
@@ -129,7 +129,7 @@ class Player(Sprite):
 
         if self.air_count > self.air_timer:
             self.y_vel = 0
-            self.fall(True, x_vel=self.x_vel * 0.5)
+            self.fall(True, x_vel=self.x_vel * 0.8)
 
 
 if __name__ == "__main__":

@@ -21,7 +21,9 @@ def check_up_down_collision(player, items):
     player.rect.bottom += add
     for i in items:
         if pg.sprite.collide_mask(player, i):
+
             if player.y_vel == 0:
+                print("colide")
                 falling = False
                 player.rect.bottom = i.rect.top
                 player.landed()
@@ -33,28 +35,21 @@ def check_up_down_collision(player, items):
 
     player.rect.bottom -= add
     if not player.in_air:
-        # print("fall")
         player.air_count = player.air_timer + 1
-
-
-# def should_fall(c, player):
-#     if c == "not collided" and not player.in_air:
-#         pass
 
 
 def collide(player, items, dx):
     global falling
+
     player.rect.move_ip(dx, 0)
     player.update()
     collided = None
     for ob in items:
         if pg.sprite.collide_mask(player, ob):
             collided = ob
-            print("work")
             if player.in_air:
-                player.x_vel *= -2 / VELOCITY
-                # player.rect.move_ip(-dx,0)
-            # player.air_count = 1+player.air_timer
+                player.x_vel *= -3 / VELOCITY
+
             break
     player.rect.move_ip(-dx, 0)
     player.update()
@@ -78,19 +73,32 @@ def action_handler(p, floor):
             p.x_vel = 0
 
 
+def wall(x, breaks_count):
+    walls = []
+    for h in range(2, breaks_count + 2):
+        walls.append(Platform(x, HEIGHT - h * (48 + 16), 48, 48, 352 - 80, 64))
+    return walls
+
+
+def platform(x, high, count):
+    breaks = []
+    for i in range(count):
+        breaks.append(Platform(x + 90 * i, HEIGHT - high * 48, 48, 16, 192, 0))
+    return breaks
+
+
 def blocks(width, height, pos_x, pos_y):
     """make block ground"""
     obj = Object(width, height)
     w, h = obj.block_w - pos_x, obj.block_h - pos_y
-
-    count_tiles = m.ceil(WIDTH / w) + 10
-    platform = []
+    count_tiles = m.ceil(WIDTH / w) + 55
+    platforms = []
     for tile in range(-2, count_tiles):
-        if tile in (8, 9, 15, 16):
+        if tile in (8, 9, 28, 29, 30, 31, 51, 52, 53):
             continue
-        platform.append(Platform(tile * w, HEIGHT - h, width, height, 96, 0))
+        platforms.append(Platform(tile * w, HEIGHT - h, width, height, 96, 0))
 
-    return platform
+    return platforms
 
 
 def draw_items(window, items, offset_x, player):
@@ -108,7 +116,7 @@ def main_game():
 
     clock = pg.time.Clock()
     offset_x = 0
-    scroll_boundary = WIDTH * 0.2
+    scroll_boundary = WIDTH * 0.25
     # window
     window = pg.display.set_mode((WIDTH, HEIGHT))
 
@@ -117,10 +125,10 @@ def main_game():
 
     # storing blocks for floor
     floor = blocks(48, 48, 0, 0)
-    wall = [Platform(-90, HEIGHT - h * (48 + 16), 48, 48, 352 - 80, 64) for h in range(2, 8)]
-    height_platform = [Platform(50 + 90 * i, HEIGHT - 6 * 48, 48, 16, 192, 0) for i in range(4)]
-
-    map_objects = [*floor, *wall, *height_platform]
+    walls = [*wall(-180, 10), *wall((WIDTH + 90) * 4, 9)]
+    platforms = [*platform(150, 6, 3), *platform(WIDTH + 100, 6, 3),
+                 *platform(WIDTH + 700, 6, 3), *platform(WIDTH, 10, 9)]
+    map_objects = [*floor, *walls, *platforms]
 
     running = True
     while running:
@@ -141,7 +149,7 @@ def main_game():
                     player.y_vel = -5
                     player.jump_count += 1
                     if player.jump_count == 2:
-                        player.air_timer += 25
+                        player.air_timer += 30
 
         # making a floor
         draw_items(window, map_objects, offset_x, player)

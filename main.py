@@ -52,7 +52,7 @@ def collide(player, items, dx):
             collided = ob
             print("work")
             if player.in_air:
-                player.x_vel *= -2/VELOCITY
+                player.x_vel *= -2 / VELOCITY
                 # player.rect.move_ip(-dx,0)
             # player.air_count = 1+player.air_timer
             break
@@ -86,7 +86,7 @@ def blocks(width, height, pos_x, pos_y):
     count_tiles = m.ceil(WIDTH / w) + 10
     platform = []
     for tile in range(-2, count_tiles):
-        if tile in (8, 9, 15,16):
+        if tile in (8, 9, 15, 16):
             continue
         platform.append(Platform(tile * w, HEIGHT - h, width, height, 96, 0))
 
@@ -116,12 +116,11 @@ def main_game():
     player = Player(32, 32)
 
     # storing blocks for floor
-    floor = [*blocks(48, 48, 0, 0),
-             Platform(50, HEIGHT - 2 * (48 + 16), 48, 48, 352 - 80, 64),
-             Platform(50, HEIGHT - 6 * 48, 48, 16, 192, 0),
-             Platform(98 + 42, HEIGHT - 6 * 48, 48, 16, 192, 0),
-             Platform(98 + 48 + 42 + 42, HEIGHT - 6 * 48, 48, 16, 192, 0)]
-    # objects = [Platform(50, HEIGHT - 3 * 48, 16, 16)]
+    floor = blocks(48, 48, 0, 0)
+    wall = [Platform(-90, HEIGHT - h * (48 + 16), 48, 48, 352 - 80, 64) for h in range(2, 8)]
+    height_platform = [Platform(50 + 90 * i, HEIGHT - 6 * 48, 48, 16, 192, 0) for i in range(4)]
+
+    map_objects = [*floor, *wall, *height_platform]
 
     running = True
     while running:
@@ -145,12 +144,12 @@ def main_game():
                         player.air_timer += 25
 
         # making a floor
-        draw_items(window, floor, offset_x, player)
+        draw_items(window, map_objects, offset_x, player)
 
         player.loop()
-        is_collided = check_up_down_collision(player=player, items=floor)
+        is_collided = check_up_down_collision(player=player, items=map_objects)
 
-        action_handler(p=player, floor=floor)
+        action_handler(p=player, floor=map_objects)
         if ((player.rect.right - offset_x >= WIDTH - scroll_boundary) and player.x_vel > 0) or (
                 (player.rect.left - offset_x <= scroll_boundary) and player.x_vel < 0):
             offset_x += player.x_vel

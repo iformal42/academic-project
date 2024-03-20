@@ -1,6 +1,6 @@
 import pygame as pg
 from player import Player
-from object import Platform, Object
+from object import Platform, Object, Trap
 import math as m
 
 # initializing constants
@@ -23,7 +23,6 @@ def check_up_down_collision(player, items):
         if pg.sprite.collide_mask(player, i):
 
             if player.y_vel == 0:
-                print("colide")
                 falling = False
                 player.rect.bottom = i.rect.top
                 player.landed()
@@ -101,13 +100,14 @@ def blocks(width, height, pos_x, pos_y):
     return platforms
 
 
-def draw_items(window, items, offset_x, player):
+def draw_items(window, items, offset_x, player, trap):
     """drawing the items of the game"""
     # making a floor
     for tile in items:
         tile.draw(window, offset_x)
     # animate the player
     player.draw(window, offset_x)
+    trap.draw(window, offset_x)
 
 
 def main_game():
@@ -123,12 +123,13 @@ def main_game():
     # adding player object
     player = Player(32, 32)
 
-    # storing blocks for floor
+    # making map design
     floor = blocks(48, 48, 0, 0)
     walls = [*wall(-180, 10), *wall((WIDTH + 90) * 4, 9)]
     platforms = [*platform(150, 6, 3), *platform(WIDTH + 100, 6, 3),
-                 *platform(WIDTH + 700, 6, 3), *platform(WIDTH, 10, 9)]
-    map_objects = [*floor, *walls, *platforms]
+                 *platform(WIDTH + 700, 6, 3), *platform(WIDTH + 3 * 60, 10, 6)]
+    trap = Trap(50, HEIGHT - 122)
+    map_objects = [*floor, *walls, *platforms,trap]
 
     running = True
     while running:
@@ -152,7 +153,7 @@ def main_game():
                         player.air_timer += 30
 
         # making a floor
-        draw_items(window, map_objects, offset_x, player)
+        draw_items(window, map_objects, offset_x, player, trap)
 
         player.loop()
         is_collided = check_up_down_collision(player=player, items=map_objects)

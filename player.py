@@ -49,8 +49,7 @@ class Player(Sprite):
         self.animation_rate = 0
         self.fall_count, self.in_air = 0, True
         self.jump_count = 0
-        self.rect.x,self.rect.y = 400,810
-
+        self.rect.x, self.rect.y = 400, 810
 
     def update(self):
         """made mask for collision"""

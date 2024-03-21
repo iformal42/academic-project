@@ -5,10 +5,17 @@ import math as m
 
 # initializing constants
 FPS = 60
-SKY = (135, 206, 235)
+SKY, SUN = (135, 206, 235), pg.image.load("gameasset/decoration/sun.png")
+coconut_tree = pg.image.load("gameasset/decoration/coconut-tree.png")
+mass_tree = pg.image.load("gameasset/decoration/mass_tree.png")
+tree = pg.image.load("gameasset/decoration/tree.png")
 WIDTH, HEIGHT = 1500, 900
+MAX_WIDTH = 7 * WIDTH
 VELOCITY = 6
 falling = True
+x_pos_traps = [500, WIDTH, 2 * WIDTH]
+y_pos_traps = 122
+COORDINATES_OF_TRAPS = [(x, y_pos_traps) for x in x_pos_traps]
 """actions of player are :- idle,run,jump,double_jump,hit,fall,wall_jump"""
 col = (0, 225, 0)
 
@@ -60,16 +67,25 @@ def action_handler(p, floor):
     cr = collide(p, floor, VELOCITY * 1.5)
     cl = collide(p, floor, -VELOCITY * 1.5)
     p.fall(falling, 0)
+
     if not falling and not p.in_air:
         keys = pg.key.get_pressed()
-        if keys[pg.K_d] and not cr:
+        if (keys[pg.K_d] or keys[pg.K_RIGHT]) and not cr:
             p.direction = "right"
             p.run(VELOCITY)
-        elif keys[pg.K_a] and not cl:
+        elif (keys[pg.K_a] or keys[pg.K_LEFT]) and not cl:
             p.direction = "left"
             p.run(VELOCITY)
         else:
             p.x_vel = 0
+
+
+def traps(coordinates: list):
+    """list of tuples (x,y); x is position from right , y from bottom"""
+    trap_list = []
+    for i in coordinates:
+        trap_list.append(Trap(i[0], HEIGHT - i[1]))
+    return trap_list
 
 
 def wall(x, breaks_count):
@@ -90,7 +106,7 @@ def blocks(width, height, pos_x, pos_y):
     """make block ground"""
     obj = Object(width, height)
     w, h = obj.block_w - pos_x, obj.block_h - pos_y
-    count_tiles = m.ceil(WIDTH / w) + 55
+    count_tiles = m.ceil(MAX_WIDTH / w)
     platforms = []
     for tile in range(-2, count_tiles):
         if tile in (8, 9, 28, 29, 30, 31, 51, 52, 53):
@@ -100,14 +116,27 @@ def blocks(width, height, pos_x, pos_y):
     return platforms
 
 
-def draw_items(window, items, offset_x, player, trap):
+def map1():
+    floor = blocks(48, 48, 0, 0)
+
+    walls = [*wall(-180, 10), *wall(MAX_WIDTH, 9)]
+
+    platforms = [*platform(150, 6, 3), *platform(WIDTH + 100, 6, 3),
+                 *platform(WIDTH + 700, 6, 3), *platform(WIDTH + 3 * 60, 10, 6)]
+
+    return [*floor, *walls, *platforms]
+
+
+def draw_items(window, items, offset_x, player, traps_items):
     """drawing the items of the game"""
     # making a floor
     for tile in items:
         tile.draw(window, offset_x)
     # animate the player
+    for trap in traps_items:
+        trap.draw(window, offset_x)
+
     player.draw(window, offset_x)
-    trap.draw(window, offset_x)
 
 
 def main_game():
@@ -123,19 +152,21 @@ def main_game():
     # adding player object
     player = Player(32, 32)
 
+    # traps
+    trap = traps(COORDINATES_OF_TRAPS)
+
     # making map design
-    floor = blocks(48, 48, 0, 0)
-    walls = [*wall(-180, 10), *wall((WIDTH + 90) * 4, 9)]
-    platforms = [*platform(150, 6, 3), *platform(WIDTH + 100, 6, 3),
-                 *platform(WIDTH + 700, 6, 3), *platform(WIDTH + 3 * 60, 10, 6)]
-    trap = Trap(50, HEIGHT - 122)
-    map_objects = [*floor, *walls, *platforms,trap]
+    map_objects = map1()
 
     running = True
     while running:
         # 60 FPS
         clock.tick(FPS)
         window.fill(SKY)
+        window.blit(SUN, (750, 100))
+        window.blit(coconut_tree, (500 - offset_x, HEIGHT - 316))
+        window.blit(tree, (WIDTH - 200 - offset_x, HEIGHT - 316))
+        window.blit(mass_tree, (2 * WIDTH - offset_x, HEIGHT - 316))
 
         for event in pg.event.get():
             # stop condition
@@ -150,15 +181,16 @@ def main_game():
                     player.y_vel = -5
                     player.jump_count += 1
                     if player.jump_count == 2:
+                        player.fall_count = 0
                         player.air_timer += 30
 
         # making a floor
         draw_items(window, map_objects, offset_x, player, trap)
 
         player.loop()
-        is_collided = check_up_down_collision(player=player, items=map_objects)
+        check_up_down_collision(player=player, items=[*map_objects, *trap])
 
-        action_handler(p=player, floor=map_objects)
+        action_handler(p=player, floor=[*map_objects, *trap])
         if ((player.rect.right - offset_x >= WIDTH - scroll_boundary) and player.x_vel > 0) or (
                 (player.rect.left - offset_x <= scroll_boundary) and player.x_vel < 0):
             offset_x += player.x_vel

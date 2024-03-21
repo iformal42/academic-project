@@ -1,6 +1,6 @@
 import pygame as pg
 
-PATH = "gameasset/Main Characters/Mask Dude/"
+PATH = "gameasset/Main Characters/Virtual Guy/"
 GRAVITY = 9.8
 ALL_SPRITE = {"idle": ["Idle (32x32).png", 11],
               "run": ["Run (32x32).png", 12],

@@ -57,7 +57,7 @@ class Trap(Object):
         self.mask = pg.mask.from_surface(self.surface)
 
     def animate(self):
-        self.animation_rate += 0.2
+        self.animation_rate += 0.09
         if int(self.animation_rate) >= len(self.all_sprites) - 1:
             self.animation_rate = 0
         self.image = self.all_sprites[int(self.animation_rate)]

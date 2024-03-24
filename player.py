@@ -44,10 +44,11 @@ class Player(Sprite):
         self.surface = pg.Surface((2 * self.width, 2 * self.height), pg.SRCALPHA).convert_alpha()
         self.mask = pg.mask.from_surface(self.surface)
         self.character_states = self.sprites_states
-        self.x_vel, self.y_vel = 0, 0
+        self.x_vel, self.y_vel, self.speed = 0, 0, 6
         self.current_state = "idle"
         self.animation_rate = 0
         self.fall_count, self.in_air = 0, True
+        self.is_hit, self.hit_count = False, 0
         self.jump_count = 0
         self.rect.x, self.rect.y = 400, 810
 
@@ -81,12 +82,17 @@ class Player(Sprite):
         # pg.draw.rect(screen,(255,0,0),self.rect)
         screen.blit(self.surface, (self.rect.x - offset_x, self.rect.y))
 
+    def hit(self):
+        self.is_hit = True
+
     def run(self, horizontal_vel: int, vertical_vel: int = 0):
         """move the sprite"""
         if self.direction == "left":
-            self.x_vel = -6
+            self.speed = -6
+
         else:
-            self.x_vel = 6
+            self.speed = 6
+        self.x_vel = self.speed
         self.current_state = "run"
         self.rect.move_ip(self.x_vel, vertical_vel)
 
@@ -114,7 +120,9 @@ class Player(Sprite):
         self.fall_count = 0
         self.air_count = 0
         self.jump_count = 0
-        self.current_state = "idle"
+        if not self.is_hit:
+            self.current_state = "idle"
+
         self.in_air, self.air_timer = False, 30
 
     def loop(self):
@@ -129,6 +137,15 @@ class Player(Sprite):
         if self.air_count > self.air_timer:
             self.y_vel = 0
             self.fall(True, x_vel=self.x_vel * 0.8)
+
+        if self.hit_count >= 90:
+            self.is_hit = False
+            self.hit_count = 0
+        elif self.hit_count < 90 and self.is_hit:
+            if self.hit_count < 6:
+                self.rect.move_ip(-self.speed, 0)
+            self.hit_count += 1
+            self.current_state = "hit"
 
 
 if __name__ == "__main__":

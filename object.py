@@ -43,7 +43,7 @@ class Trap(Object):
     def __init__(self, pos_x, pos_y):
         super().__init__(16, 32, path=TRAP_PATH, scale_x=20, scale_y=28)
 
-        self.image = pg.image.load(TRAP_PATH)
+        self.img = None
         self.all_sprites = [self.build(begin_x=i * 16, begin_y=0) for i in range(3)]
         self.surface = pg.Surface((self.block_w, self.block_h), pg.SRCALPHA).convert_alpha()
         self.mask = pg.mask.from_surface(self.surface)
@@ -53,16 +53,16 @@ class Trap(Object):
     def update(self):
         """made mask for collision"""
         self.surface = pg.Surface((self.block_w, self.block_h), pg.SRCALPHA).convert_alpha()
-        self.surface.blit(self.image, (0, 0))
+        self.surface.blit(self.img, (0, 0))
         self.mask = pg.mask.from_surface(self.surface)
 
     def animate(self):
         self.animation_rate += 0.09
         if int(self.animation_rate) >= len(self.all_sprites) - 1:
             self.animation_rate = 0
-        self.image = self.all_sprites[int(self.animation_rate)]
+        self.img = self.all_sprites[int(self.animation_rate)]
         self.update()
 
     def draw(self, screen, offset):
         self.animate()
-        screen.blit(self.image, (self.rect.x - offset, self.rect.y))
+        screen.blit(self.img, (self.rect.x - offset, self.rect.y))

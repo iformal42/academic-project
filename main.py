@@ -50,7 +50,7 @@ def collide(player, items, dx):
         if pg.sprite.collide_mask(player, ob):
             collided = ob
             if player.in_air:
-                player.x_vel *= -3 / VELOCITY
+                player.x_vel *= -1 / VELOCITY
             break
     player.rect.move_ip(-dx, 0)
     player.update()
@@ -164,7 +164,9 @@ def main_game():
                 (player.rect.left - offset_x <= scroll_boundary) and player.x_vel < 0):
             offset_x += player.x_vel
         if player.rect.y >= 950:
-            pg.quit()
+            player.rect.topleft = (90,200)
+            offset_x = 0
+            # pg.quit()
         pg.display.update()
 
 

@@ -17,7 +17,7 @@ def blocks(width, height, pos_x, pos_y):
     count_tiles = m.ceil(MAX_SCREEN_WIDTH / w)
     platforms = []
     for tile in range(-2, count_tiles):
-        if tile in (8, 9, 28, 29, 30, 31, 51, 52, 53):
+        if tile in (8, 9, 28, 29, 30, 31, 51, 52, 53, 102, 103,):
             continue
         platforms.append(Platform(tile * w, SCREEN_HEIGHT - h, width, height, 96, 0))
     return platforms
@@ -35,7 +35,7 @@ def platform(x, high, count):
     return breaks
 
 
-def wall(x, breaks_count):
+def wall(x, breaks_count) -> list:
     """make walls"""
     walls = []
     for h in range(2, breaks_count + 2):
@@ -51,10 +51,30 @@ def layout(window, width, height, offset_x):
     window.blit(mass_tree, (2 * width - offset_x, height - 316))
 
 
+#
+def wall_stares(stare_len, position, reverse=False):
+    change = 0
+    if reverse:
+        change = stare_len - 1
+    stare_list = []
+
+    for b in range(stare_len):
+        stare = wall(position + b * 90, abs(change - b))
+        stare_list.extend(stare)
+    print(stare_list)
+
+    return stare_list
+
+
 def map1():
+    # making floors
     floor = blocks(48, 48, 0, 0)
 
-    walls = [*wall(-180, 10), *wall(MAX_SCREEN_WIDTH, 9)]
+    # making walls
+    stare = wall_stares(7, 95 * 90)
+    starerev = wall_stares(7, 104 * 90, reverse=True)
+
+    walls = [*wall(-180, 10), *wall(MAX_SCREEN_WIDTH, 9), *wall(58*90,4),*wall(67*90,4),*stare, *starerev]
 
     platforms = [*platform(150, 6, 3), *platform(SCREEN_WIDTH + 100, 6, 3),
                  *platform(SCREEN_WIDTH + 700, 6, 3), *platform(SCREEN_WIDTH + 3 * 60, 10, 6)]

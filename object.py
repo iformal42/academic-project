@@ -66,3 +66,17 @@ class Trap(Object):
     def draw(self, screen, offset):
         self.animate()
         screen.blit(self.img, (self.rect.x - offset, self.rect.y))
+
+
+fruit_path = "gameasset/Fruits/"
+fruits = {
+    "apple": [f"{fruit_path}Apple.png", 17],
+    "cherries": [f"{fruit_path}Cherries.png", 17],
+    "strawberry": [f"{fruit_path}Strawberry.png", 17],
+
+}
+
+
+class Fruits(Object):
+    def __init__(self):
+        super().__init__(32, 32)

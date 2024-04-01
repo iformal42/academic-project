@@ -3,7 +3,7 @@ from player import Player
 from object import Trap
 from enemy import Enemy
 import layouts as lay
-from layouts import map1
+from layouts import map1, make_traps
 
 # initializing constants
 FPS = 60
@@ -85,14 +85,6 @@ def action_handler(p, floor, obstacle):
             p.x_vel = 0
 
 
-def traps(coordinates: list):
-    """list of tuples (x,y); x is position from right , y from bottom"""
-    trap_list = []
-    for i in coordinates:
-        trap_list.append(Trap(i[0], HEIGHT - i[1]))
-    return trap_list
-
-
 def draw_items(window, items, offset_x, player, traps_items, enemy_list):
     """drawing the items of the game"""
     # making a floor
@@ -114,19 +106,27 @@ def main_game():
     offset_x = 0
     scroll_boundary = WIDTH * 0.25
     # window
-    window = pg.display.set_mode((WIDTH, HEIGHT))#, pg.FULLSCREEN | pg.SCALED)
+    window = pg.display.set_mode((WIDTH, HEIGHT))  # , pg.FULLSCREEN | pg.SCALED)
 
     # adding player object
     player = Player(32, 32)
 
-    # traps
-    trap = traps(COORDINATES_OF_TRAPS)
-
-    enemy = Enemy(400, 550, 270)
-    enemy2 = Enemy(2190, 360, 6*90, "pig")
+    enemy1 = Enemy(400, 550, 270)
+    enemy2 = Enemy(2190, 360, 6 * 90, "pig")
+    enemy3 = Enemy(11 * 90, 789, 17 * 90, "snail", flip="first")
+    enemy4 = Enemy(28 * 90, 789, 18 * 90, "snail")
+    enemy5 = Enemy(60 * 90, 750, 90 * 5, name="bunny", flip="first")
+    enemy6 = Enemy(64 * 90, 750, 90 * 5, name="bunny")
+    enemy7 = Enemy(67 * 90, 772, 90 * 5, name="chicken", flip="first")
+    enemy8 = Enemy(71 * 90, 771, 90 * 5, name="chicken")
+    enemy9 = Enemy(85 * 90, 771, 90 * 3, name="pig", flip="first")
+    enemy10 = Enemy(92 * 90, 771, 90 * 3, name="mushroom")
+    enemies = [enemy1, enemy2, enemy3, enemy4, enemy6, enemy5, enemy7, enemy8, enemy9, enemy10]
 
     # making map design
-    map_objects = map1()
+    # making floor,blocks,walls
+    # traps
+    map_objects, trap = map1()
 
     running = True
     while running:
@@ -154,17 +154,17 @@ def main_game():
                         player.air_timer += 30
 
         # making a floor
-        draw_items(window, map_objects, offset_x, player, trap, [enemy,enemy2])
+        draw_items(window, map_objects, offset_x, player, trap, enemies)
 
         player.loop()
         check_up_down_collision(player=player, items=map_objects)
 
-        action_handler(p=player, floor=map_objects, obstacle=[*trap, enemy2])
+        action_handler(p=player, floor=map_objects, obstacle=[*trap, *enemies])  # enemies here
         if ((player.rect.right - offset_x >= WIDTH - scroll_boundary) and player.x_vel > 0) or (
                 (player.rect.left - offset_x <= scroll_boundary) and player.x_vel < 0):
             offset_x += player.x_vel
         if player.rect.y >= 950:
-            player.rect.topleft = (90,200)
+            player.rect.topleft = (90, 200)
             offset_x = 0
             # pg.quit()
         pg.display.update()

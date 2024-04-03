@@ -51,6 +51,7 @@ class Player(Sprite):
         self.is_hit, self.hit_count = False, 0
         self.jump_count = 0
         self.rect.x, self.rect.y = 400, 810
+        self.life = 6
 
     def update(self):
         """made mask for collision"""
@@ -141,6 +142,7 @@ class Player(Sprite):
         if self.hit_count >= 90:
             self.is_hit = False
             self.hit_count = 0
+            self.life -= 1
         elif self.hit_count < 90 and self.is_hit:
             if self.hit_count < 6:
                 self.rect.move_ip(-self.speed, 0)

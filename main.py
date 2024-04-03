@@ -1,9 +1,9 @@
 import pygame as pg
 from player import Player
-from object import Trap
-from enemy import Enemy
+from object import Collect
+from board import Board
 import layouts as lay
-from layouts import map1, make_traps
+from layouts import map1
 
 # initializing constants
 FPS = 60
@@ -11,10 +11,9 @@ WIDTH, HEIGHT = lay.SCREEN_WIDTH, lay.SCREEN_HEIGHT
 MAX_WIDTH = lay.MAX_SCREEN_WIDTH
 VELOCITY = 6
 falling = True
-x_pos_traps = [500, WIDTH, 2 * WIDTH]
-y_pos_traps = [122, 348]
-ground_position_trap = [(x, y_pos_traps[0]) for x in x_pos_traps]
-COORDINATES_OF_TRAPS = [*ground_position_trap, (WIDTH + 200, y_pos_traps[1])]
+score = 0
+life = 6
+collected = []
 """actions of player are :- idle,run,jump,double_jump,hit,fall,wall_jump"""
 
 
@@ -59,18 +58,34 @@ def collide(player, items, dx):
 
 def check_trap_collision(player, items):
     """checking trap collision with player"""
+    global life
     for trap in items:
         if pg.sprite.collide_mask(player, trap):
             player.hit()
             return trap
 
 
-def action_handler(p, floor, obstacle):
+def fruit_collision(player, items):
+    """checking trap collision with player"""
+    global score
+
+    for fruit in items:
+        if pg.sprite.collide_mask(player, fruit):
+            c = Collect()
+            c.rect.x, c.rect.y = fruit.rect.x, fruit.rect.y
+            collected.append(c)
+            items.remove(fruit)
+            score += 100
+            print(score)
+            break
+
+
+def action_handler(p, floor, obstacle, fruit_list):
     """keys event handler"""
     collide_right = collide(p, floor, VELOCITY * 1.5)
     collide_left = collide(p, floor, -VELOCITY * 1.5)
     check_trap_collision(player=p, items=obstacle)
-
+    fruit_collision(player=p, items=fruit_list)
     p.fall(falling, 0)
 
     if not falling and not p.in_air:
@@ -85,55 +100,72 @@ def action_handler(p, floor, obstacle):
             p.x_vel = 0
 
 
-def draw_items(window, items, offset_x, player, traps_items, enemy_list):
+def draw_items(window, items, offset_x, player, traps_items, enemy_list, fruits):
     """drawing the items of the game"""
     # making a floor
+
     for tile in items:
         tile.draw(window, offset_x)
     # animate the player
     for trap in traps_items:
         trap.draw(window, offset_x)
+
+    for fruit in fruits:
+        fruit.draw(window, offset_x)
+
     for enemy in enemy_list:
         enemy.draw(window, offset_x)
+    for cc in collected:
+        d = cc.draw(window, offset_x)
+        if d:
+            collected.remove(cc)
     player.draw(window, offset_x)
+
+
+def game_end(banner, window):
+    time = int(pg.time.get_ticks() / 1000)
+    banner.game_over(70, (255, 0, 0), (550, 450))
+    pg.display.update()
+    pg.time.wait(3000)
+    window.fill((0, 0, 0))
+    banner.show_score(70, f"Your score: {score}", (255, 255, 255), (400, 400))
+    banner.show_score(70, f"Total Survival Time: {time} secs", (255, 255, 255), (400, 550))
+    pg.display.update()
+    pg.time.wait(6000)
+
+
+def game_layout(level):
+    return map1(level)
 
 
 def main_game():
     # initialize the pygame
     pg.init()
-
     clock = pg.time.Clock()
     offset_x = 0
     scroll_boundary = WIDTH * 0.25
+    level = 1
     # window
     window = pg.display.set_mode((WIDTH, HEIGHT))  # , pg.FULLSCREEN | pg.SCALED)
 
     # adding player object
     player = Player(32, 32)
 
-    enemy1 = Enemy(400, 550, 270)
-    enemy2 = Enemy(2190, 360, 6 * 90, "pig")
-    enemy3 = Enemy(11 * 90, 789, 17 * 90, "snail", flip="first")
-    enemy4 = Enemy(28 * 90, 789, 18 * 90, "snail")
-    enemy5 = Enemy(60 * 90, 750, 90 * 5, name="bunny", flip="first")
-    enemy6 = Enemy(64 * 90, 750, 90 * 5, name="bunny")
-    enemy7 = Enemy(67 * 90, 772, 90 * 5, name="chicken", flip="first")
-    enemy8 = Enemy(71 * 90, 771, 90 * 5, name="chicken")
-    enemy9 = Enemy(85 * 90, 771, 90 * 3, name="pig", flip="first")
-    enemy10 = Enemy(92 * 90, 771, 90 * 3, name="mushroom")
-    enemies = [enemy1, enemy2, enemy3, enemy4, enemy6, enemy5, enemy7, enemy8, enemy9, enemy10]
-
     # making map design
-    # making floor,blocks,walls
-    # traps
-    map_objects, trap = map1()
+    # making floor,blocks,walls,enemy,traps,fruits
 
+    map_objects, trap, enemies, fruit_list = game_layout(level)
+
+    banner = Board(window)
     running = True
+    print(pg.time.get_ticks())
     while running:
         # 60 FPS
         clock.tick(FPS)
-        lay.layout(window, WIDTH, HEIGHT, offset_x)
-
+        time = int(pg.time.get_ticks() / 1000)
+        lay.layout(window, WIDTH, HEIGHT, offset_x, level)
+        banner.show_score(40, f"SCORE: {score}", (255, 255, 255), (20, 10))
+        banner.show_score(40, f"LIFE: {player.life}", (255, 255, 255), (1300, 10))
         for event in pg.event.get():
             # stop condition
             if event.type is pg.QUIT:
@@ -154,19 +186,32 @@ def main_game():
                         player.air_timer += 30
 
         # making a floor
-        draw_items(window, map_objects, offset_x, player, trap, enemies)
+        draw_items(window, map_objects, offset_x, player, trap, enemies, fruit_list)
 
         player.loop()
         check_up_down_collision(player=player, items=map_objects)
+        action_handler(p=player, floor=map_objects, obstacle=[trap[0], enemies[0]],
+                       fruit_list=fruit_list)  # enemies here
 
-        action_handler(p=player, floor=map_objects, obstacle=[*trap, *enemies])  # enemies here
-        if ((player.rect.right - offset_x >= WIDTH - scroll_boundary) and player.x_vel > 0) or (
-                (player.rect.left - offset_x <= scroll_boundary) and player.x_vel < 0):
-            offset_x += player.x_vel
-        if player.rect.y >= 950:
-            player.rect.topleft = (90, 200)
+        if 300 < player.rect.x < 1500 * 6 + 1090:
+            if ((player.rect.right - offset_x >= WIDTH - scroll_boundary) and player.x_vel > 0) or (
+                    (player.rect.left - offset_x <= scroll_boundary) and player.x_vel < 0):
+                offset_x += player.x_vel
+
+        if 115 * 90 - 10 < player.rect.x < 115 * 90 + 10:
+            if level == 2:
+                pg.quit()
+            player.rect.center = (400, 800)
+            pg.display.update()
+            pg.time.wait(2000)
             offset_x = 0
-            # pg.quit()
+            level = 2
+            map_objects, trap, enemies, fruit_list = game_layout(level)
+
+        if player.rect.y >= 950 or player.life <= 0:
+            game_end(banner, window)
+            pg.quit()
+
         pg.display.update()
 
 

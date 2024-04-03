@@ -7,7 +7,11 @@ enemies = {
     "chicken": [f"{path}Chicken/move.png", 14, 32, 34],
     "snail": [f"{path}Snail/move.png", 10, 38, 24],
     "bunny": [f"{path}Bunny/move.png", 12, 34, 44],
-    "pig": [f"{path}AngryPig/move.png", 16, 36, 30]
+    "pig": [f"{path}AngryPig/move.png", 16, 36, 30],
+    "chameleon": [f"{path}Chamelion/img.png", 8, 84, 38],
+    "bat": [f"{path}Bat/img.png", 7, 46, 30],
+    "ghost": [f"{path}Ghost/img.png", 10, 44, 30],
+    "slime": [f"{path}Slime/img.png", 10, 44, 30],
 }
 
 

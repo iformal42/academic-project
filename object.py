@@ -1,4 +1,5 @@
 import pygame as pg
+import random as rd
 
 PATH = "gameasset/Terrain/Terrain (16x16).png"
 
@@ -73,10 +74,70 @@ fruits = {
     "apple": [f"{fruit_path}Apple.png", 17],
     "cherries": [f"{fruit_path}Cherries.png", 17],
     "strawberry": [f"{fruit_path}Strawberry.png", 17],
+    "melon": [f"{fruit_path}Melon.png", 17],
+    "orange": [f"{fruit_path}Orange.png", 17],
+    "kiwi": [f"{fruit_path}Kiwi.png", 17],
+    "pineapple": [f"{fruit_path}Pineapple.png", 17],
 
 }
 
 
-class Fruits(Object):
+class Collect(Object):
     def __init__(self):
-        super().__init__(32, 32)
+        super().__init__(32, 32, path=f"{fruit_path}Collected.png", scale_x=32, scale_y=32)
+        self.done = False
+        self.img = None
+        self.all_sprites = [self.build(begin_x=i * 32, begin_y=0) for i in range(6)]
+        self.animation_rate = 0
+
+    def animate(self):
+        self.animation_rate += 0.20
+        if int(self.animation_rate) >= len(self.all_sprites):
+            self.animation_rate = 0
+            self.done = True
+        self.img = self.all_sprites[int(self.animation_rate)]
+
+    def draw(self, screen, offset_x):
+        self.animate()
+        if not self.done:
+            screen.blit(self.img, (self.rect.x - offset_x, self.rect.y))
+        return self.done
+
+
+class Fruits(Object):
+    def __init__(self, pos_x, pos_y):
+        self.position = None
+        self.window = None
+        fruit_list = ["apple", "strawberry", "cherries", "pineapple", "melon", "orange", "kiwi"]
+        self.name = rd.choice(fruit_list)
+        super().__init__(32, 32, path=fruits[self.name][0], scale_x=32, scale_y=32)
+        self.img = None
+        self.all_sprites = [self.build(begin_x=i * 32, begin_y=0) for i in range(fruits[self.name][1])]
+        self.surface = pg.Surface((self.block_w, self.block_h), pg.SRCALPHA).convert_alpha()
+        self.mask = pg.mask.from_surface(self.surface)
+        self.rect.center = (pos_x, pos_y)
+        self.animation_rate = 0
+
+    def update(self):
+        """made mask for collision"""
+        self.surface = pg.Surface((self.block_w, self.block_h), pg.SRCALPHA).convert_alpha()
+        self.surface.blit(self.img, (0, 0))
+        self.mask = pg.mask.from_surface(self.surface)
+
+    def animate(self):
+        self.animation_rate += 0.25
+        if int(self.animation_rate) >= len(self.all_sprites):
+            self.animation_rate = 0
+        self.img = self.all_sprites[int(self.animation_rate)]
+        self.update()
+
+    def draw(self, screen, offset):
+        self.window = screen
+        self.position = (self.rect.x - offset, self.rect.y)
+        self.animate()
+        screen.blit(self.img, self.position)
+
+    # def collected(self):
+    #     d = Collect()
+
+    #     d.draw(self.window,self.position)

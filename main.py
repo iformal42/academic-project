@@ -1,4 +1,5 @@
 import pygame as pg
+from pygame import mixer
 from player import Player
 from object import Collect
 from board import Board
@@ -14,6 +15,13 @@ falling = True
 score = 0
 life = 6
 collected = []
+
+mixer.init()
+eat_sound = mixer.Sound("gameasset/music/eat.mp3")
+hit_sound = mixer.Sound("gameasset/music/hit.mp3")
+jump_sound = mixer.Sound("gameasset/music/jump.mp3")
+mixer.music.load("gameasset/music/level1.mp3")
+
 """actions of player are :- idle,run,jump,double_jump,hit,fall,wall_jump"""
 
 
@@ -61,6 +69,7 @@ def check_trap_collision(player, items):
     global life
     for trap in items:
         if pg.sprite.collide_mask(player, trap):
+            hit_sound.play()
             player.hit()
             return trap
 
@@ -72,11 +81,12 @@ def fruit_collision(player, items):
     for fruit in items:
         if pg.sprite.collide_mask(player, fruit):
             c = Collect()
+            eat_sound.play()
             c.rect.x, c.rect.y = fruit.rect.x, fruit.rect.y
             collected.append(c)
             items.remove(fruit)
             score += 100
-            print(score)
+
             break
 
 
@@ -122,9 +132,9 @@ def draw_items(window, items, offset_x, player, traps_items, enemy_list, fruits)
     player.draw(window, offset_x)
 
 
-def game_end(banner, window):
+def game_end(banner, window, message, pos=(550, 450), color=(255, 0, 0)):
     time = int(pg.time.get_ticks() / 1000)
-    banner.game_over(70, (255, 0, 0), (550, 450))
+    banner.game_over(70, color, pos, msg=message)
     pg.display.update()
     pg.time.wait(3000)
     window.fill((0, 0, 0))
@@ -141,12 +151,16 @@ def game_layout(level):
 def main_game():
     # initialize the pygame
     pg.init()
+    mixer.init()
     clock = pg.time.Clock()
+
     offset_x = 0
     scroll_boundary = WIDTH * 0.25
     level = 1
+
+    mixer.music.play(-1)
     # window
-    window = pg.display.set_mode((WIDTH, HEIGHT))  # , pg.FULLSCREEN | pg.SCALED)
+    window = pg.display.set_mode((WIDTH, HEIGHT), pg.FULLSCREEN | pg.SCALED)
 
     # adding player object
     player = Player(32, 32)
@@ -158,11 +172,9 @@ def main_game():
 
     banner = Board(window)
     running = True
-    print(pg.time.get_ticks())
     while running:
         # 60 FPS
         clock.tick(FPS)
-        time = int(pg.time.get_ticks() / 1000)
         lay.layout(window, WIDTH, HEIGHT, offset_x, level)
         banner.show_score(40, f"SCORE: {score}", (255, 255, 255), (20, 10))
         banner.show_score(40, f"LIFE: {player.life}", (255, 255, 255), (1300, 10))
@@ -179,6 +191,7 @@ def main_game():
                     running = False
 
                 if event.key == pg.K_SPACE and player.jump_count < 2 and not falling:
+                    jump_sound.play()
                     player.y_vel = -5
                     player.jump_count += 1
                     if player.jump_count == 2:
@@ -190,7 +203,7 @@ def main_game():
 
         player.loop()
         check_up_down_collision(player=player, items=map_objects)
-        action_handler(p=player, floor=map_objects, obstacle=[trap[0], enemies[0]],
+        action_handler(p=player, floor=map_objects, obstacle=[*trap, *enemies],
                        fruit_list=fruit_list)  # enemies here
 
         if 300 < player.rect.x < 1500 * 6 + 1090:
@@ -199,17 +212,22 @@ def main_game():
                 offset_x += player.x_vel
 
         if 115 * 90 - 10 < player.rect.x < 115 * 90 + 10:
-            if level == 2:
-                pg.quit()
+            mixer.music.load("gameasset/music/level2.mp3")
+            mixer.music.play(-1)
             player.rect.center = (400, 800)
             pg.display.update()
+            if level == 2:
+                mixer.music.load("gameasset/music/gamewon.mp3")
+                mixer.music.play(-1)
+                game_end(banner, window, "HOME SWEET HOME", color=(0, 255, 0), pos=(400, 450))
+                pg.quit()
             pg.time.wait(2000)
             offset_x = 0
             level = 2
             map_objects, trap, enemies, fruit_list = game_layout(level)
 
-        if player.rect.y >= 950 or player.life <= 0:
-            game_end(banner, window)
+        if player.rect.y >= 950 or player.life < 0:
+            game_end(banner, window, "GAME OVER")
             pg.quit()
 
         pg.display.update()

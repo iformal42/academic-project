@@ -13,6 +13,7 @@ home = pg.image.load("gameasset/decoration/wooden-house.png")
 htree1 = pg.image.load("gameasset/decoration/dead-tree1.png")
 htree2 = pg.image.load("gameasset/decoration/horror tree.png")
 htree3 = pg.image.load("gameasset/decoration/dead-tree.png")
+moon = pg.image.load("gameasset/decoration/full-moon.png")
 current_level = 1
 unit = 90
 
@@ -78,6 +79,7 @@ def layout(window, width, height, offset_x, level):
     if level == 2:
         current_level = 2
         window.fill((4, 26, 64))
+        window.blit(moon,(750,100))
         window.blit(htree2, (500 - offset_x, height - 316))
         window.blit(htree2, (unit * 62 - offset_x, height - 316))
         window.blit(htree1, (width - 200 - offset_x, height - 300))

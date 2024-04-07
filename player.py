@@ -1,6 +1,8 @@
 import pygame as pg
+import random as rd
 
-PATH = "gameasset/Main Characters/Virtual Guy/"
+PATH = "gameasset/Main Characters/"
+player = ["Virtual Guy/", "Ninja Frog/", "Pink Man/", "Mask Dude/"]
 GRAVITY = 9.8
 ALL_SPRITE = {"idle": ["Idle (32x32).png", 11],
               "run": ["Run (32x32).png", 12],
@@ -15,11 +17,13 @@ ALL_SPRITE = {"idle": ["Idle (32x32).png", 11],
 class Sprite(pg.sprite.Sprite):
     def __init__(self, width, height):
         super().__init__()
+        self.character = rd.choice(player)
+        self.path = f"{PATH}{self.character}"
         self.width, self.height = width, height
         self.rect = pg.Rect(0, 0, self.width, self.height)
         self.sprites_states = {}
         for sprite_sheet in ALL_SPRITE:
-            character_img = pg.image.load(f"{PATH}{ALL_SPRITE[sprite_sheet][0]}")
+            character_img = pg.image.load(f"{self.path}{ALL_SPRITE[sprite_sheet][0]}")
             frames = ALL_SPRITE[sprite_sheet][1]
             player_list = []
             for frame in range(frames):

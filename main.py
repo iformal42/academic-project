@@ -13,7 +13,7 @@ MAX_WIDTH = lay.MAX_SCREEN_WIDTH
 VELOCITY = 6
 falling = True
 score = 0
-life = 6
+
 collected = []
 
 mixer.init()
@@ -66,12 +66,26 @@ def collide(player, items, dx):
 
 def check_trap_collision(player, items):
     """checking trap collision with player"""
-    global life
+
     for trap in items:
         if pg.sprite.collide_mask(player, trap):
             hit_sound.play()
             player.hit()
             return trap
+
+
+def check_enemy_collision(player, items):
+    """checking enemy collision with player"""
+    e = items
+    for enemy in items:
+        if pg.sprite.collide_mask(player, enemy):
+            if player.current_state == "fall" and player.rect.bottom > enemy.rect.top:
+                items.remove(enemy)
+                return enemy
+            else:
+                hit_sound.play()
+                player.hit()
+                return enemy
 
 
 def fruit_collision(player, items):
@@ -86,15 +100,15 @@ def fruit_collision(player, items):
             collected.append(c)
             items.remove(fruit)
             score += 100
-
             break
 
 
-def action_handler(p, floor, obstacle, fruit_list):
+def action_handler(p, floor, obstacle, fruit_list, enemies):
     """keys event handler"""
     collide_right = collide(p, floor, VELOCITY * 1.5)
     collide_left = collide(p, floor, -VELOCITY * 1.5)
     check_trap_collision(player=p, items=obstacle)
+    check_enemy_collision(player=p, items=enemies)
     fruit_collision(player=p, items=fruit_list)
     p.fall(falling, 0)
 
@@ -160,7 +174,7 @@ def main_game():
 
     mixer.music.play(-1)
     # window
-    window = pg.display.set_mode((WIDTH, HEIGHT), pg.FULLSCREEN | pg.SCALED)
+    window = pg.display.set_mode((WIDTH, HEIGHT))  # , pg.FULLSCREEN | pg.SCALED)
 
     # adding player object
     player = Player(32, 32)
@@ -203,8 +217,8 @@ def main_game():
 
         player.loop()
         check_up_down_collision(player=player, items=map_objects)
-        action_handler(p=player, floor=map_objects, obstacle=[*trap, *enemies],
-                       fruit_list=fruit_list)  # enemies here
+        action_handler(p=player, floor=map_objects, obstacle=trap,
+                       fruit_list=fruit_list, enemies=enemies)  # enemies here
 
         if 300 < player.rect.x < 1500 * 6 + 1090:
             if ((player.rect.right - offset_x >= WIDTH - scroll_boundary) and player.x_vel > 0) or (

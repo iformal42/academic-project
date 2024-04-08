@@ -174,7 +174,7 @@ def main_game():
 
     mixer.music.play(-1)
     # window
-    window = pg.display.set_mode((WIDTH, HEIGHT))  # , pg.FULLSCREEN | pg.SCALED)
+    window = pg.display.set_mode((WIDTH, HEIGHT) , pg.FULLSCREEN | pg.SCALED)
 
     # adding player object
     player = Player(32, 32)

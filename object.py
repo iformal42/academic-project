@@ -137,7 +137,4 @@ class Fruits(Object):
         self.animate()
         screen.blit(self.img, self.position)
 
-    # def collected(self):
-    #     d = Collect()
 
-    #     d.draw(self.window,self.position)

@@ -76,11 +76,14 @@ def check_trap_collision(player, items):
 
 def check_enemy_collision(player, items):
     """checking enemy collision with player"""
-    e = items
+
     for enemy in items:
+        global score
         if pg.sprite.collide_mask(player, enemy):
             if player.current_state == "fall" and player.rect.bottom > enemy.rect.top:
                 items.remove(enemy)
+                score += 200
+                player.bounce()
                 return enemy
             else:
                 hit_sound.play()
@@ -172,9 +175,11 @@ def main_game():
     scroll_boundary = WIDTH * 0.25
     level = 1
 
+    # music
     mixer.music.play(-1)
+    should_play = True
     # window
-    window = pg.display.set_mode((WIDTH, HEIGHT) , pg.FULLSCREEN | pg.SCALED)
+    window = pg.display.set_mode((WIDTH, HEIGHT), pg.FULLSCREEN | pg.SCALED)
 
     # adding player object
     player = Player(32, 32)
@@ -201,10 +206,10 @@ def main_game():
                 player.current_state = "idle"
 
             if event.type == pg.KEYDOWN:
-                if event.key == pg.K_q:
+                if event.key == pg.K_q or event.key == pg.K_ESCAPE:
                     running = False
 
-                if event.key == pg.K_SPACE and player.jump_count < 2 and not falling:
+                if (event.key == pg.K_SPACE or event.key == pg.K_UP) and player.jump_count < 2 and not falling:
                     jump_sound.play()
                     player.y_vel = -5
                     player.jump_count += 1
@@ -224,16 +229,19 @@ def main_game():
             if ((player.rect.right - offset_x >= WIDTH - scroll_boundary) and player.x_vel > 0) or (
                     (player.rect.left - offset_x <= scroll_boundary) and player.x_vel < 0):
                 offset_x += player.x_vel
-
-        if 115 * 90 - 10 < player.rect.x < 115 * 90 + 10:
+        if level == 2 and should_play:
             mixer.music.load("gameasset/music/level2.mp3")
             mixer.music.play(-1)
+            should_play = False
+        if 115 * 90 - 10 < player.rect.x < 115 * 90 + 10:
             player.rect.center = (400, 800)
+            window.blit(lay.home, (90 * 114 - offset_x, HEIGHT - 310))
             pg.display.update()
             if level == 2:
                 mixer.music.load("gameasset/music/gamewon.mp3")
                 mixer.music.play(-1)
                 game_end(banner, window, "HOME SWEET HOME", color=(0, 255, 0), pos=(400, 450))
+                running = False
                 pg.quit()
             pg.time.wait(2000)
             offset_x = 0
@@ -242,8 +250,7 @@ def main_game():
 
         if player.rect.y >= 950 or player.life < 0:
             game_end(banner, window, "GAME OVER")
-            pg.quit()
-
+            running = False
         pg.display.update()
 
 

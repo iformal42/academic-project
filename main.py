@@ -1,4 +1,6 @@
 import pygame as pg
+import asyncio
+
 from pygame import mixer
 from player import Player
 from object import Collect
@@ -16,14 +18,10 @@ score = 0
 
 collected = []
 
-mixer.init()
-eat_sound = mixer.Sound("gameasset/music/eat.mp3")
-hit_sound = mixer.Sound("gameasset/music/hit.mp3")
-jump_sound = mixer.Sound("gameasset/music/jump.mp3")
-mixer.music.load("gameasset/music/level1.mp3")
-
 """actions of player are :- idle,run,jump,double_jump,hit,fall,wall_jump"""
 
+global window
+window = pg.display.set_mode((WIDTH, HEIGHT), pg.FULLSCREEN)
 
 def check_up_down_collision(player, items):
     """check_up_down_collision"""
@@ -152,23 +150,30 @@ def draw_items(window, items, offset_x, player, traps_items, enemy_list, fruits)
 def game_end(banner, window, message, pos=(550, 450), color=(255, 0, 0)):
     time = int(pg.time.get_ticks() / 1000)
     banner.game_over(70, color, pos, msg=message)
-    pg.display.update()
     pg.time.wait(3000)
     window.fill((0, 0, 0))
     banner.show_score(70, f"Your score: {score}", (255, 255, 255), (400, 400))
     banner.show_score(70, f"Total Survival Time: {time} secs", (255, 255, 255), (400, 550))
-    pg.display.update()
     pg.time.wait(6000)
 
 
 def game_layout(level):
     return map1(level)
 
+# window
 
-def main_game():
+async def main_game():
     # initialize the pygame
     pg.init()
     mixer.init()
+    mixer.SoundPatch()  # type: ignore
+
+    global eat_sound, hit_sound, jump_sound
+    eat_sound = mixer.Sound("gameasset/music/eat.mp3")
+    hit_sound = mixer.Sound("gameasset/music/hit.mp3")
+    jump_sound = mixer.Sound("gameasset/music/jump.mp3")
+    mixer.music.load("gameasset/music/level1.mp3")
+
     clock = pg.time.Clock()
 
     offset_x = 0
@@ -178,8 +183,6 @@ def main_game():
     # music
     mixer.music.play(-1)
     should_play = True
-    # window
-    window = pg.display.set_mode((WIDTH, HEIGHT), pg.FULLSCREEN | pg.SCALED)
 
     # adding player object
     player = Player(32, 32)
@@ -191,6 +194,7 @@ def main_game():
 
     banner = Board(window)
     running = True
+
     while running:
         # 60 FPS
         clock.tick(FPS)
@@ -236,7 +240,6 @@ def main_game():
         if 115 * 90 - 10 < player.rect.x < 115 * 90 + 10:
             player.rect.center = (400, 800)
             window.blit(lay.home, (90 * 114 - offset_x, HEIGHT - 310))
-            pg.display.update()
             if level == 2:
                 mixer.music.load("gameasset/music/gamewon.mp3")
                 mixer.music.play(-1)
@@ -252,7 +255,8 @@ def main_game():
             game_end(banner, window, "GAME OVER")
             running = False
         pg.display.update()
+        await asyncio.wait(0)
 
 
 if __name__ == "__main__":
-    main_game()
+   asyncio.run(main_game())

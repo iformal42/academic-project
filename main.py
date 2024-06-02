@@ -1,5 +1,6 @@
 import pygame as pg
 import asyncio
+import sys
 
 from pygame import mixer
 from player import Player
@@ -166,7 +167,8 @@ async def main_game():
     # initialize the pygame
     pg.init()
     mixer.init()
-    mixer.SoundPatch()  # type: ignore
+    if sys.platform == 'emscripten':
+            mixer.SoundPatch()  # type: ignore
 
     global eat_sound, hit_sound, jump_sound
     eat_sound = mixer.Sound("gameasset/music/eat.mp3")
@@ -255,7 +257,7 @@ async def main_game():
             game_end(banner, window, "GAME OVER")
             running = False
         pg.display.update()
-        await asyncio.wait(0)
+        await asyncio.sleep(0)
 
 
 if __name__ == "__main__":
